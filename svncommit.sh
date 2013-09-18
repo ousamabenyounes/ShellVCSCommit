@@ -2,8 +2,9 @@
 
 # Print help message
 usage () {
-    echo "Usage: svncommit.sh -d -o -m"
+    echo "Usage: svncommit.sh -d -t -o -m"
     echo "  -d: PhpUnit CodeCoverage Html Report Directory ."
+    echo "  -t: PhpUnit Test Suite Directory ."
     echo "  -o: PhpUnit Options (--stop-on-error | --stop-on-failure ...)."
     echo "  -m: SVN log message"
 
@@ -21,15 +22,21 @@ checkReturnedVal () {
     fi
 }
 
+PHPUNIT_HOME_DIR=""
 PHPUNIT_COVERAGE_CMD=""
 PHPUNIT_OPTIONS=""
 SVN_LOG_MSG=""
+PHPCS_REFORMAT_DIR=""
+PROJECT_DIR=""
 
 # ------------------------------------------------------------------------------ #
 # Parsing all parameters
-while getopts ":d:o:m:" opt; do
+while getopts ":d:t:s:o:m:p:" opt; do
   case "$opt" in
     d)  PHPUNIT_COVERAGE_DIR="--coverage-html $OPTARG";;
+    t)  PHPUNIT_HOME_DIR="$OPTARG";;
+    s)  PHPCS_REFORMAT_DIR="$OPTARG";;
+    p)  PROJECT_DIR="$OPTARG";;
     o)  PHPUNIT_OPTIONS="$OPTARG";;
     m)  SVN_LOG_MSG="$OPTARG";;
 
@@ -56,9 +63,9 @@ fi
 
 # Launch all WebApiBundle Phpunit Tests
 echo "[INFO] phpunit: Launching Tests"
-echo "[CMD] cd /var/www/analytics/webApp/"
+echo "[CMD] cd $PHPUNIT_HOME_DIR"
 echo "[CMD] phpunit $PHPUNIT_COVERAGE_DIR $PHPUNIT_OPTIONS"
-cd "/var/www/analytics/webApp/"
+cd $PHPUNIT_HOME_DIR
 phpunit $PHPUNIT_COVERAGE_DIR $PHPUNIT_OPTIONS
 checkReturnedVal
 
@@ -73,23 +80,21 @@ checkReturnedVal
 
 # Automatically fix source code presentation (PSR1 PSR2...)
 echo "[INFO] php-cs-fixer: Fixing PHP PSR "
-echo "[CMD] php-cs-fixer fix src/MMC/Analytics/Api/WebApiBundle"
-php-cs-fixer fix src/MMC/Analytics/Api/WebApiBundle 
+echo "[CMD] php-cs-fixer fix $PHPCS_REFORMAT_DIR"
+php-cs-fixer fix $PHPCS_REFORMAT_DIR
 checkReturnedVal
 
 result=`svn status -q`
 if [ -z "$result" ]; then
     echo "[INFO] SVN => No changes"
 else
-    echo "[INFO] SVN => Changes found"
+    # send commit to the repository                                                                                                                                                                         
+    echo "[INFO] svn: Commit changes"
+    echo "[CMD] cd $PROJECT_DIR"
+    echo "[CMD] svn commit -m\"$SVN_LOG_MSG\" "
+    cd $PROJECT_DIR
+    svn commit -m"$SVN_LOG_MSG"
+    checkReturnedVal
 fi
-
-# send commit to the repository
-echo "[INFO] svn: Commit changes"
-echo "[CMD] cd /var/www/analytics"
-echo "[CMD] svn commit -m\"$SVN_LOG_MSG\" "
-cd "/var/www/analytics/"
-svn commit -m"$SVN_LOG_MSG"
-checkReturnedVal
 
 exit 0
