@@ -1,4 +1,4 @@
-ShellSvnCommit
+ShellVCSCommit
 ==============
 
 This shell script launches some usefull commands before committing your SVN changes:
