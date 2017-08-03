@@ -1,7 +1,7 @@
 ShellVCSCommit
 ==============
 
-This shell script launches some usefull commands before committing your GIT/SVN/Mercurial changes:
+This shell script launches some useful commands before committing your GIT/SVN/Mercurial changes:
 
 1) First it launches your phpunit tests suite: 
 - You can specify your CodeCoverage Directory (-d option)
